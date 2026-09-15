@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redefinir senha — Ferramentas Financeiro</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: #f4f6f9;
+    color: #1f2937;
+  }
+  #caixa {
+    max-width: 380px;
+    margin: 80px auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+  }
+  #caixa h1 { font-size: 20px; margin: 0 0 4px; }
+  #caixa p.sub { margin: 0 0 24px; color: #6b7280; font-size: 14px; }
+  #caixa label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; margin-top: 16px; }
+  #caixa input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+  }
+  #caixa button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 11px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #caixa button:hover { background: #1d4ed8; }
+  .erro {
+    margin-top: 12px;
+    color: #b91c1c;
+    background: #fee2e2;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    display: none;
+  }
+  .aviso-ok {
+    margin-top: 12px;
+    color: #15803d;
+    background: #dcfce7;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    display: none;
+  }
+  #carregando { text-align: center; padding: 80px 20px; color: #6b7280; }
+  .oculto { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="carregando">Carregando…</div>
+
+<div id="caixa" class="oculto">
+  <h1>Definir nova senha</h1>
+  <p class="sub" id="sub-texto">Escolha uma nova senha para sua conta.</p>
+
+  <form id="form-nova-senha">
+    <label for="nova-senha">Nova senha</label>
+    <input type="password" id="nova-senha" required minlength="6">
+    <label for="confirmar-senha">Confirmar nova senha</label>
+    <input type="password" id="confirmar-senha" required minlength="6">
+    <button type="submit">Salvar nova senha</button>
+    <div class="erro" id="erro"></div>
+    <div class="aviso-ok" id="ok"></div>
+  </form>
+</div>
+
+<script type="module">
+  import { supabase } from '/assets/supabase-client.js';
+
+  const carregando = document.getElementById('carregando');
+  const caixa = document.getElementById('caixa');
+  const subTexto = document.getElementById('sub-texto');
+  const form = document.getElementById('form-nova-senha');
+  const erroBox = document.getElementById('erro');
+  const okBox = document.getElementById('ok');
+
+  // Quando o usuário clica no link do e-mail, o Supabase processa o token
+  // e dispara o evento PASSWORD_RECOVERY assim que a sessão temporária fica pronta.
+  let sessaoPronta = false;
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY' && session) {
+      sessaoPronta = true;
+      carregando.classList.add('oculto');
+      caixa.classList.remove('oculto');
+    }
+  });
+
+  // Fallback: se o evento já tiver disparado antes deste script rodar,
+  // ou se já existir uma sessão válida vinda do link, libera o formulário mesmo assim.
+  setTimeout(async () => {
+    if (sessaoPronta) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    carregando.classList.add('oculto');
+    if (session) {
+      caixa.classList.remove('oculto');
+    } else {
+      subTexto.textContent = 'Link inválido ou expirado. Peça um novo e-mail de redefinição na tela de login.';
+    }
+  }, 2500);
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    erroBox.style.display = 'none';
+    okBox.style.display = 'none';
+
+    const nova = document.getElementById('nova-senha').value;
+    const confirmar = document.getElementById('confirmar-senha').value;
+
+    if (nova !== confirmar) {
+      erroBox.textContent = 'As senhas não coincidem.';
+      erroBox.style.display = 'block';
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: nova });
+    if (error) {
+      erroBox.textContent = 'Não foi possível salvar a senha: ' + error.message;
+      erroBox.style.display = 'block';
+      return;
+    }
+
+    okBox.textContent = 'Senha alterada com sucesso! Redirecionando para o login...';
+    okBox.style.display = 'block';
+    form.querySelector('button').disabled = true;
+    setTimeout(() => {
+      supabase.auth.signOut().then(() => window.location.href = '/');
+    }, 2000);
+  });
+</script>
+
+</body>
+</html>

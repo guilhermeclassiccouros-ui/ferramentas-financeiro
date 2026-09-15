@@ -1,5 +1,264 @@
 <!DOCTYPE html>
-  <html lang="pt-BR">
+  <html lang="pt-BR"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferramentas Financeiro</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: #f4f6f9;
+    color: #1f2937;
+  }
+  header {
+    background: #0f172a;
+    color: #fff;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header .titulo h1 { margin: 0 0 4px; font-size: 24px; }
+  header .titulo p { margin: 0; color: #94a3b8; font-size: 14px; }
+  header nav { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  header nav a:hover { color: #fff; }
+  header .usuario {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  header .usuario button {
+    background: #1e293b;
+    color: #fff;
+    border: 1px solid #334155;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  header .usuario button:hover { background: #334155; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card h2 { margin: 0; font-size: 18px; }
+  .card p { margin: 0; color: #6b7280; font-size: 14px; flex-grow: 1; }
+  .card a, .card .disabled {
+    display: inline-block;
+    text-align: center;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .card a { background: #2563eb; color: #fff; }
+  .card a:hover { background: #1d4ed8; }
+  .card .disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+
+  /* Tela de login */
+  #tela-login {
+    max-width: 380px;
+    margin: 80px auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+  }
+  #tela-login h1 { font-size: 20px; margin: 0 0 4px; }
+  #tela-login p.sub { margin: 0 0 24px; color: #6b7280; font-size: 14px; }
+  #tela-login label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; margin-top: 16px; }
+  #tela-login input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+  }
+  #tela-login button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 11px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #tela-login button:hover { background: #1d4ed8; }
+  #tela-login .erro {
+    margin-top: 12px;
+    color: #b91c1c;
+    background: #fee2e2;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    display: none;
+  }
+
+  #carregando { text-align: center; padding: 80px 20px; color: #6b7280; }
+  .oculto { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="carregando">Carregando…</div>
+
+<div id="tela-login" class="oculto">
+  <h1>Ferramentas Financeiro</h1>
+  <p class="sub">Entre com sua conta para continuar.</p>
+  <form id="form-login">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" required autocomplete="username">
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" required autocomplete="current-password">
+    <button type="submit">Entrar</button>
+    <div class="erro" id="erro-login"></div>
+  </form>
+</div>
+
+<div id="tela-app" class="oculto">
+  <header>
+    <div class="titulo">
+      <h1>Ferramentas Financeiro</h1>
+      <p>Plataforma de módulos para o setor financeiro</p>
+    </div>
+    <nav id="nav-admin"></nav>
+    <div class="usuario">
+      <span id="usuario-email"></span>
+      <button id="btn-sair">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="card">
+        <h2>Folha de Pagamento</h2>
+        <p>Painel geral, cadastro de colaboradores, importação de base e processamento de relatórios.</p>
+        <a href="modulos/folha-pagamento/index.html">Abrir módulo</a>
+      </div>
+      <div class="card">
+        <h2>PDF Suite Pro</h2>
+        <p>Ferramentas para manipulação de arquivos PDF.</p>
+        <span class="disabled">Em breve</span>
+      </div>
+      <div class="card">
+        <h2>BankMatch</h2>
+        <p>Conciliação e cruzamento de dados bancários.</p>
+        <span class="disabled">Em breve</span>
+      </div>
+      <div class="card">
+        <h2>Renomeador ML</h2>
+        <p>Renomeação inteligente de arquivos.</p>
+        <span class="disabled">Em breve</span>
+      </div>
+      <div class="card">
+        <h2>Renomeador Pagamentos Diários</h2>
+        <p>Renomeação de arquivos de pagamentos diários.</p>
+        <span class="disabled">Em breve</span>
+      </div>
+      <div class="card">
+        <h2>Renomeador Exportação</h2>
+        <p>Renomeação de arquivos de exportação.</p>
+        <span class="disabled">Em breve</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { supabase } from '/assets/supabase-client.js';
+  import { getSessaoEPerfil } from '/assets/auth-guard.js';
+
+  const telaLogin = document.getElementById('tela-login');
+  const telaApp = document.getElementById('tela-app');
+  const carregando = document.getElementById('carregando');
+
+  async function iniciar() {
+    const { session, perfil } = await getSessaoEPerfil();
+    carregando.classList.add('oculto');
+
+    if (!session) {
+      telaLogin.classList.remove('oculto');
+      return;
+    }
+
+    if (!perfil || perfil.ativo === false) {
+      await supabase.auth.signOut();
+      alert('Sua conta está desativada. Fale com um administrador.');
+      telaLogin.classList.remove('oculto');
+      return;
+    }
+
+    document.getElementById('usuario-email').textContent = `${perfil.nome || session.user.email} (${perfil.papel})`;
+
+    const nav = document.getElementById('nav-admin');
+    if (perfil.papel === 'admin') {
+      nav.innerHTML = `<a href="/usuarios.html">Usuários</a><a href="/logs.html">Log de Ações</a>`;
+    }
+
+    telaApp.classList.remove('oculto');
+  }
+
+  document.getElementById('form-login').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    const erroBox = document.getElementById('erro-login');
+    erroBox.style.display = 'none';
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) {
+      erroBox.textContent = 'E-mail ou senha inválidos.';
+      erroBox.style.display = 'block';
+      return;
+    }
+    telaLogin.classList.add('oculto');
+    carregando.classList.remove('oculto');
+    await iniciar();
+  });
+
+  document.getElementById('btn-sair').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
+  });
+
+  iniciar();
+</script>
+
+</body>
+</html>
+
   <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

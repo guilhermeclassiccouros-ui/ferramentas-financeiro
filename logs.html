@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log de Ações — Ferramentas Financeiro</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #f4f6f9; color: #1f2937; }
+  header {
+    background: #0f172a; color: #fff; padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  header a { color: #cbd5e1; text-decoration: none; font-size: 14px; font-weight: 600; }
+  header a:hover { color: #fff; }
+  header h1 { margin: 0; font-size: 20px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  .painel {
+    background: #fff; border-radius: 12px; padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;
+  }
+  .filtros { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filtros input {
+    padding: 8px 10px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 13px; flex: 1; min-width: 200px;
+  }
+  .filtros button {
+    background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer;
+  }
+  .filtros button:hover { background: #f3f4f6; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef0f2; vertical-align: top; }
+  th { color: #6b7280; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  code { font-size: 11px; color: #6b7280; word-break: break-word; }
+
+  #carregando { text-align: center; padding: 80px 20px; color: #6b7280; }
+  .oculto { display: none !important; }
+  .vazio { text-align: center; padding: 32px; color: #9ca3af; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="carregando">Carregando…</div>
+
+<div id="conteudo" class="oculto">
+  <header>
+    <h1>Log de Ações</h1>
+    <a href="/">← Voltar para os módulos</a>
+  </header>
+
+  <main>
+    <div class="painel">
+      <div class="filtros">
+        <input type="text" id="filtro-texto" placeholder="Filtrar por usuário, ação ou entidade...">
+        <button id="btn-atualizar">Atualizar</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Usuário</th>
+            <th>Ação</th>
+            <th>Entidade</th>
+            <th>Detalhes</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-log"></tbody>
+      </table>
+      <div class="vazio oculto" id="vazio">Nenhum registro encontrado.</div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { supabase } from '/assets/supabase-client.js';
+  import { exigirLogin } from '/assets/auth-guard.js';
+
+  let registros = [];
+
+  function formatarData(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('pt-BR');
+  }
+
+  function renderizar() {
+    const termo = document.getElementById('filtro-texto').value.trim().toLowerCase();
+    const tbody = document.getElementById('tbody-log');
+    const vazio = document.getElementById('vazio');
+    tbody.innerHTML = '';
+
+    const filtrados = registros.filter((r) => {
+      if (!termo) return true;
+      return [r.usuario_email, r.acao, r.entidade, r.entidade_id]
+        .filter(Boolean)
+        .some((campo) => String(campo).toLowerCase().includes(termo));
+    });
+
+    vazio.classList.toggle('oculto', filtrados.length > 0);
+
+    filtrados.forEach((r) => {
+      const tr = document.createElement('tr');
+      const detalhes = r.detalhes && Object.keys(r.detalhes).length ? JSON.stringify(r.detalhes) : '—';
+      tr.innerHTML = `
+        <td>${formatarData(r.criado_em)}</td>
+        <td>${r.usuario_email ?? ''}</td>
+        <td>${r.acao ?? ''}</td>
+        <td>${r.entidade ?? ''} ${r.entidade_id ? `#${r.entidade_id}` : ''}</td>
+        <td><code>${detalhes}</code></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function carregar() {
+    const { data, error } = await supabase
+      .from('log_acoes')
+      .select('*')
+      .order('criado_em', { ascending: false })
+      .limit(300);
+    if (error) {
+      alert('Erro ao carregar log: ' + error.message);
+      return;
+    }
+    registros = data || [];
+    renderizar();
+  }
+
+  document.getElementById('btn-atualizar').addEventListener('click', carregar);
+  document.getElementById('filtro-texto').addEventListener('input', renderizar);
+
+  (async () => {
+    const ok = await exigirLogin({ exigirAdmin: true, redirecionarPara: '/' });
+    if (!ok) return;
+    document.getElementById('carregando').classList.add('oculto');
+    document.getElementById('conteudo').classList.remove('oculto');
+    await carregar();
+  })();
+</script>
+
+</body>
+</html>

@@ -115,10 +115,32 @@
     cursor: pointer;
   }
   #tela-login button:hover { background: #1d4ed8; }
+  #tela-login .link-secundario {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #2563eb;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  #tela-login .link-secundario:hover { text-decoration: underline; }
   #tela-login .erro {
     margin-top: 12px;
     color: #b91c1c;
     background: #fee2e2;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    display: none;
+  }
+  #tela-login .aviso-ok {
+    margin-top: 12px;
+    color: #15803d;
+    background: #dcfce7;
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 13px;
@@ -136,13 +158,25 @@
 <div id="tela-login" class="oculto">
   <h1>Ferramentas Financeiro</h1>
   <p class="sub">Entre com sua conta para continuar.</p>
+
   <form id="form-login">
-    <label for="email">E-mail</label>
-    <input type="email" id="email" required autocomplete="username">
+    <label for="usuario">Usuário</label>
+    <input type="text" id="usuario" required autocomplete="username">
     <label for="senha">Senha</label>
     <input type="password" id="senha" required autocomplete="current-password">
     <button type="submit">Entrar</button>
+    <button type="button" class="link-secundario" id="btn-esqueci">Esqueci minha senha</button>
     <div class="erro" id="erro-login"></div>
+    <div class="aviso-ok" id="ok-login"></div>
+  </form>
+
+  <form id="form-recuperar" class="oculto">
+    <label for="usuario-recuperar">Usuário</label>
+    <input type="text" id="usuario-recuperar" required>
+    <button type="submit">Enviar e-mail de redefinição</button>
+    <button type="button" class="link-secundario" id="btn-voltar-login">Voltar para o login</button>
+    <div class="erro" id="erro-recuperar"></div>
+    <div class="aviso-ok" id="ok-recuperar"></div>
   </form>
 </div>
 
@@ -202,6 +236,8 @@
   const telaLogin = document.getElementById('tela-login');
   const telaApp = document.getElementById('tela-app');
   const carregando = document.getElementById('carregando');
+  const formLogin = document.getElementById('form-login');
+  const formRecuperar = document.getElementById('form-recuperar');
 
   async function iniciar() {
     const { session, perfil } = await getSessaoEPerfil();
@@ -229,22 +265,66 @@
     telaApp.classList.remove('oculto');
   }
 
-  document.getElementById('form-login').addEventListener('submit', async (ev) => {
+  formLogin.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    const email = document.getElementById('email').value.trim();
+    const usuario = document.getElementById('usuario').value.trim();
     const senha = document.getElementById('senha').value;
     const erroBox = document.getElementById('erro-login');
     erroBox.style.display = 'none';
 
+    const { data: email, error: erroEmail } = await supabase.rpc('email_por_usuario', { p_usuario: usuario });
+    if (erroEmail || !email) {
+      erroBox.textContent = 'Usuário ou senha inválidos.';
+      erroBox.style.display = 'block';
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
     if (error) {
-      erroBox.textContent = 'E-mail ou senha inválidos.';
+      erroBox.textContent = 'Usuário ou senha inválidos.';
       erroBox.style.display = 'block';
       return;
     }
     telaLogin.classList.add('oculto');
     carregando.classList.remove('oculto');
     await iniciar();
+  });
+
+  document.getElementById('btn-esqueci').addEventListener('click', () => {
+    formLogin.classList.add('oculto');
+    formRecuperar.classList.remove('oculto');
+  });
+  document.getElementById('btn-voltar-login').addEventListener('click', () => {
+    formRecuperar.classList.add('oculto');
+    formLogin.classList.remove('oculto');
+  });
+
+  formRecuperar.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const usuario = document.getElementById('usuario-recuperar').value.trim();
+    const erroBox = document.getElementById('erro-recuperar');
+    const okBox = document.getElementById('ok-recuperar');
+    erroBox.style.display = 'none';
+    okBox.style.display = 'none';
+
+    const { data: email } = await supabase.rpc('email_por_usuario', { p_usuario: usuario });
+    if (!email) {
+      // Não revela se o usuário existe ou não, por segurança.
+      okBox.textContent = 'Se o usuário existir, um e-mail de redefinição foi enviado.';
+      okBox.style.display = 'block';
+      return;
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/redefinir-senha.html',
+    });
+    if (error) {
+      erroBox.textContent = 'Não foi possível enviar o e-mail agora. Tente novamente mais tarde.';
+      erroBox.style.display = 'block';
+      return;
+    }
+    okBox.textContent = 'Se o usuário existir, um e-mail de redefinição foi enviado.';
+    okBox.style.display = 'block';
   });
 
   document.getElementById('btn-sair').addEventListener('click', async () => {

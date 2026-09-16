@@ -4,6 +4,17 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Classic Couros — Folha de Pagamento</title>
+<!-- ===== Início: proteção de acesso (Ferramentas Financeiro) ===== -->
+<style>html.ff-verificando body{visibility:hidden}</style>
+<script>document.documentElement.classList.add('ff-verificando');</script>
+<script type="module">
+  import { exigirLogin } from '/assets/auth-guard.js';
+  (async () => {
+    const ok = await exigirLogin({ exigirAdmin: false, redirecionarPara: '/' });
+    if (ok) document.documentElement.classList.remove('ff-verificando');
+  })();
+</script>
+<!-- ===== Fim: proteção de acesso ===== -->
 <style>
 /* =========================================================================
    style.css — Folha de Pagamento

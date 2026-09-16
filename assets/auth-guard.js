@@ -6,7 +6,7 @@ export async function getSessaoEPerfil() {
   if (!session) return { session: null, perfil: null };
   const { data: perfil } = await supabase
     .from('perfis')
-    .select('nome, papel, ativo')
+    .select('nome, papel, ativo, deve_trocar_senha')
     .eq('id', session.user.id)
     .single();
   return { session, perfil };

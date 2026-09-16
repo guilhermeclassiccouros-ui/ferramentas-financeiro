@@ -83,7 +83,7 @@
   .card .disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
 
   /* Tela de login */
-  #tela-login {
+  .cartao-auth {
     max-width: 380px;
     margin: 80px auto;
     background: #fff;
@@ -92,17 +92,17 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     border: 1px solid #e5e7eb;
   }
-  #tela-login h1 { font-size: 20px; margin: 0 0 4px; }
-  #tela-login p.sub { margin: 0 0 24px; color: #6b7280; font-size: 14px; }
-  #tela-login label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; margin-top: 16px; }
-  #tela-login input {
+  .cartao-auth h1 { font-size: 20px; margin: 0 0 4px; }
+  .cartao-auth p.sub { margin: 0 0 24px; color: #6b7280; font-size: 14px; }
+  .cartao-auth label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; margin-top: 16px; }
+  .cartao-auth input {
     width: 100%;
     padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid #d1d5db;
     font-size: 14px;
   }
-  #tela-login button {
+  .cartao-auth button {
     width: 100%;
     margin-top: 24px;
     padding: 11px;
@@ -114,8 +114,8 @@
     font-weight: 600;
     cursor: pointer;
   }
-  #tela-login button:hover { background: #1d4ed8; }
-  #tela-login .link-secundario {
+  .cartao-auth button:hover { background: #1d4ed8; }
+  .cartao-auth .link-secundario {
     display: block;
     text-align: center;
     margin-top: 16px;
@@ -127,8 +127,8 @@
     cursor: pointer;
     width: 100%;
   }
-  #tela-login .link-secundario:hover { text-decoration: underline; }
-  #tela-login .erro {
+  .cartao-auth .link-secundario:hover { text-decoration: underline; }
+  .cartao-auth .erro {
     margin-top: 12px;
     color: #b91c1c;
     background: #fee2e2;
@@ -137,7 +137,7 @@
     font-size: 13px;
     display: none;
   }
-  #tela-login .aviso-ok {
+  .cartao-auth .aviso-ok {
     margin-top: 12px;
     color: #15803d;
     background: #dcfce7;
@@ -147,6 +147,20 @@
     display: none;
   }
 
+  .regras-senha {
+    margin-top: 16px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .regras-senha strong { display: block; margin-bottom: 6px; font-size: 13px; }
+  .regras-senha ul { margin: 0; padding-left: 18px; }
+  .regras-senha li { color: #9ca3af; margin-bottom: 2px; }
+  .regras-senha li.ok { color: #15803d; }
+  .regras-senha li.ok::marker { content: "✓ "; }
+
   #carregando { text-align: center; padding: 80px 20px; color: #6b7280; }
   .oculto { display: none !important; }
 </style>
@@ -155,7 +169,7 @@
 
 <div id="carregando">Carregando…</div>
 
-<div id="tela-login" class="oculto">
+<div id="tela-login" class="oculto cartao-auth">
   <h1>Ferramentas Financeiro</h1>
   <p class="sub">Entre com sua conta para continuar.</p>
 
@@ -177,6 +191,30 @@
     <button type="button" class="link-secundario" id="btn-voltar-login">Voltar para o login</button>
     <div class="erro" id="erro-recuperar"></div>
     <div class="aviso-ok" id="ok-recuperar"></div>
+  </form>
+</div>
+
+<div id="tela-trocar-senha" class="oculto cartao-auth">
+  <h1>Defina sua senha</h1>
+  <p class="sub">Por segurança, você precisa trocar a senha inicial antes de continuar.</p>
+
+  <div class="regras-senha">
+    <strong>A nova senha precisa ter:</strong>
+    <ul>
+      <li id="regra-tamanho">Pelo menos 8 caracteres</li>
+      <li id="regra-maiuscula">Uma letra maiúscula (A-Z)</li>
+      <li id="regra-minuscula">Uma letra minúscula (a-z)</li>
+      <li id="regra-numero">Um número (0-9)</li>
+    </ul>
+  </div>
+
+  <form id="form-trocar-senha">
+    <label for="nova-senha-inicial">Nova senha</label>
+    <input type="password" id="nova-senha-inicial" required autocomplete="new-password">
+    <label for="confirmar-senha-inicial">Confirmar nova senha</label>
+    <input type="password" id="confirmar-senha-inicial" required autocomplete="new-password">
+    <button type="submit">Salvar e continuar</button>
+    <div class="erro" id="erro-trocar-senha"></div>
   </form>
 </div>
 
@@ -235,9 +273,29 @@
 
   const telaLogin = document.getElementById('tela-login');
   const telaApp = document.getElementById('tela-app');
+  const telaTrocarSenha = document.getElementById('tela-trocar-senha');
   const carregando = document.getElementById('carregando');
   const formLogin = document.getElementById('form-login');
   const formRecuperar = document.getElementById('form-recuperar');
+  const formTrocarSenha = document.getElementById('form-trocar-senha');
+
+  function regrasSenhaAtendidas(senha) {
+    return {
+      tamanho: senha.length >= 8,
+      maiuscula: /[A-Z]/.test(senha),
+      minuscula: /[a-z]/.test(senha),
+      numero: /[0-9]/.test(senha),
+    };
+  }
+
+  function atualizarChecklistSenha(senha) {
+    const regras = regrasSenhaAtendidas(senha);
+    document.getElementById('regra-tamanho').classList.toggle('ok', regras.tamanho);
+    document.getElementById('regra-maiuscula').classList.toggle('ok', regras.maiuscula);
+    document.getElementById('regra-minuscula').classList.toggle('ok', regras.minuscula);
+    document.getElementById('regra-numero').classList.toggle('ok', regras.numero);
+    return Object.values(regras).every(Boolean);
+  }
 
   async function iniciar() {
     const { session, perfil } = await getSessaoEPerfil();
@@ -255,11 +313,16 @@
       return;
     }
 
+    if (perfil.deve_trocar_senha) {
+      telaTrocarSenha.classList.remove('oculto');
+      return;
+    }
+
     document.getElementById('usuario-email').textContent = `${perfil.nome || session.user.email} (${perfil.papel})`;
 
     const nav = document.getElementById('nav-admin');
     if (perfil.papel === 'admin') {
-      nav.innerHTML = `<a href="/usuarios.html">Usuários</a><a href="/logs.html">Log de Ações</a>`;
+      nav.innerHTML = `<a href="/usuarios.html">Configurações</a><a href="/logs.html">Log de Ações</a>`;
     }
 
     telaApp.classList.remove('oculto');
@@ -330,6 +393,44 @@
   document.getElementById('btn-sair').addEventListener('click', async () => {
     await supabase.auth.signOut();
     window.location.reload();
+  });
+
+  const inputNovaSenhaInicial = document.getElementById('nova-senha-inicial');
+  inputNovaSenhaInicial.addEventListener('input', () => {
+    atualizarChecklistSenha(inputNovaSenhaInicial.value);
+  });
+
+  formTrocarSenha.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const erroBox = document.getElementById('erro-trocar-senha');
+    erroBox.style.display = 'none';
+
+    const nova = document.getElementById('nova-senha-inicial').value;
+    const confirmar = document.getElementById('confirmar-senha-inicial').value;
+
+    if (!atualizarChecklistSenha(nova)) {
+      erroBox.textContent = 'A senha ainda não atende a todas as regras acima.';
+      erroBox.style.display = 'block';
+      return;
+    }
+    if (nova !== confirmar) {
+      erroBox.textContent = 'As senhas não coincidem.';
+      erroBox.style.display = 'block';
+      return;
+    }
+
+    const { error: erroSenha } = await supabase.auth.updateUser({ password: nova });
+    if (erroSenha) {
+      erroBox.textContent = 'Não foi possível salvar a senha: ' + erroSenha.message;
+      erroBox.style.display = 'block';
+      return;
+    }
+
+    await supabase.rpc('marcar_senha_trocada');
+
+    telaTrocarSenha.classList.add('oculto');
+    carregando.classList.remove('oculto');
+    await iniciar();
   });
 
   iniciar();

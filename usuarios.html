@@ -80,9 +80,8 @@
           <label>E-mail (para redefinir senha)</label>
           <input type="email" id="novo-email" required>
         </div>
-        <div>
-          <label>Senha inicial</label>
-          <input type="text" id="novo-senha" required minlength="6" placeholder="mín. 6 caracteres">
+        <div style="align-self:end;padding-bottom:10px;font-size:13px;color:#6b7280;">
+          Senha inicial padrão: <strong>123456</strong>
         </div>
         <div>
           <label>Papel</label>
@@ -95,7 +94,7 @@
       </form>
       <div class="msg" id="msg-novo"></div>
       <p style="font-size:12px;color:#6b7280;margin-top:10px;">
-        O usuário (login) precisa ser único e sem espaços. Compartilhe a senha inicial com a pessoa por um canal seguro — ela também pode redefinir a própria senha depois pela tela de login ("Esqueci minha senha").
+        O usuário (login) precisa ser único e sem espaços. Todo usuário novo começa com a senha padrão <strong>123456</strong> e é obrigado a trocá-la por uma escolhida por ele no primeiro acesso (a tela de login mostra as regras da nova senha nesse momento).
       </p>
     </div>
 
@@ -225,11 +224,10 @@
     msg.style.display = 'none';
     const nome = document.getElementById('novo-nome').value.trim();
     const email = document.getElementById('novo-email').value.trim();
-    const senha = document.getElementById('novo-senha').value;
     const papel = document.getElementById('novo-papel').value;
 
     try {
-      await chamarFuncao('create', { nome, email, password: senha, papel });
+      await chamarFuncao('create', { nome, email, papel });
       msg.className = 'msg msg-ok';
       msg.textContent = 'Usuário criado com sucesso.';
       msg.style.display = 'block';
